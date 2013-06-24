@@ -1,5 +1,23 @@
 #include "ofxThreadedImageLoader.h"
 #include <sstream>
+
+
+ofxThreadedImageLoader* ofxThreadedImageLoader::__instance = 0;
+
+//--------------------------------------------------------------
+ofxThreadedImageLoader* ofxThreadedImageLoader::instance(){
+  if (__instance == 0){
+    __instance = new ofxThreadedImageLoader();
+  }
+  return __instance;
+}
+
+//--------------------------------------------------------------
+void ofxThreadedImageLoader::setup(){
+  instance();
+}
+
+//--------------------------------------------------------------
 ofxThreadedImageLoader::ofxThreadedImageLoader() 
 :ofThread()
 {
@@ -20,34 +38,36 @@ ofxThreadedImageLoader::~ofxThreadedImageLoader(){
 // Load an image from disk.
 //--------------------------------------------------------------
 void ofxThreadedImageLoader::loadFromDisk(ofImage& image, string filename) {
-	nextID++;
+  instance();
+	__instance->nextID++;
 	ofImageLoaderEntry entry(image, OF_LOAD_FROM_DISK);
 	entry.filename = filename;
-	entry.id = nextID;
+	entry.id = __instance->nextID;
 	entry.image->setUseTexture(false);
 	entry.name = filename;
     
-    lock();
-    images_to_load_buffer.push_back(entry);
-    condition.signal();
-    unlock();
+    __instance->lock();
+    __instance->images_to_load_buffer.push_back(entry);
+    __instance->condition.signal();
+    __instance->unlock();
 }
 
 
 // Load an url asynchronously from an url.
 //--------------------------------------------------------------
 void ofxThreadedImageLoader::loadFromURL(ofImage& image, string url) {
-	nextID++;
+  instance();
+	__instance->nextID++;
 	ofImageLoaderEntry entry(image, OF_LOAD_FROM_URL);
 	entry.url = url;
-	entry.id = nextID;
+	entry.id = __instance->nextID;
 	entry.image->setUseTexture(false);	
 	entry.name = "image" + ofToString(entry.id);
 
-    lock();
-	images_to_load_buffer.push_back(entry);
-    condition.signal();
-    unlock();
+    __instance->lock();
+	__instance->images_to_load_buffer.push_back(entry);
+    __instance->condition.signal();
+    __instance->unlock();
 }
 
 

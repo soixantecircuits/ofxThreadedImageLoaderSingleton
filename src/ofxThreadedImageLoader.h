@@ -12,61 +12,64 @@
 using namespace std;
 
 class ofxThreadedImageLoader : public ofThread {
-public:
-    ofxThreadedImageLoader();
+  public:
     ~ofxThreadedImageLoader();
 
-	void loadFromDisk(ofImage& image, string file);
-	void loadFromURL(ofImage& image, string url);
+    static void setup();
+    static void loadFromDisk(ofImage& image, string file);
+    static void loadFromURL(ofImage& image, string url);
 
-  ofEvent<ofImage> imageLoadedEvent;
+    ofEvent<ofImage> imageLoadedEvent;
+    static ofxThreadedImageLoader* instance();
 
 
-private:
-	void update(ofEventArgs & a);
+  private:
+    static ofxThreadedImageLoader* __instance;
+    ofxThreadedImageLoader();
+    void update(ofEventArgs & a);
     virtual void threadedFunction();
-	void urlResponse(ofHttpResponse & response);
+    void urlResponse(ofHttpResponse & response);
 
     // Where to load form?
     enum ofLoaderType {
-        OF_LOAD_FROM_DISK
+      OF_LOAD_FROM_DISK
         ,OF_LOAD_FROM_URL
     };
-    
-    
+
+
     // Entry to load.
     struct ofImageLoaderEntry {
-        ofImageLoaderEntry() {
-            image = NULL;
-            type = OF_LOAD_FROM_DISK;
-            id=0;
-        }
-        
-        ofImageLoaderEntry(ofImage & pImage, ofLoaderType nType) {
-            image = &pImage;
-            type = nType;
-            id=0;
-        }
-        ofImage* image;
-        ofLoaderType type;
-        string filename;
-        string url;
-        string name;
-        int id;
+      ofImageLoaderEntry() {
+        image = NULL;
+        type = OF_LOAD_FROM_DISK;
+        id=0;
+      }
+
+      ofImageLoaderEntry(ofImage & pImage, ofLoaderType nType) {
+        image = &pImage;
+        type = nType;
+        id=0;
+      }
+      ofImage* image;
+      ofLoaderType type;
+      string filename;
+      string url;
+      string name;
+      int id;
     };
 
 
     typedef deque<ofImageLoaderEntry>::iterator entry_iterator;
-	entry_iterator      getEntryFromAsyncQueue(string name);
+    entry_iterator      getEntryFromAsyncQueue(string name);
 
-	int                 nextID;
+    int                 nextID;
 
     Poco::Condition     condition;
 
     int                 lastUpdate;
 
-	deque<ofImageLoaderEntry> images_async_loading; // keeps track of images which are loading async
-	deque<ofImageLoaderEntry> images_to_load_buffer;
+    deque<ofImageLoaderEntry> images_async_loading; // keeps track of images which are loading async
+    deque<ofImageLoaderEntry> images_to_load_buffer;
     deque<ofImageLoaderEntry> images_to_update;
 };
 
