@@ -1,43 +1,43 @@
-#include "ofxThreadedImageLoader.h"
+#include "ofxThreadedImageLoaderSingleton.h"
 #include <sstream>
 
 
-ofxThreadedImageLoader* ofxThreadedImageLoader::__instance = 0;
+ofxThreadedImageLoaderSingleton* ofxThreadedImageLoaderSingleton::__instance = 0;
 
 //--------------------------------------------------------------
-ofxThreadedImageLoader* ofxThreadedImageLoader::instance(){
+ofxThreadedImageLoaderSingleton* ofxThreadedImageLoaderSingleton::instance(){
   if (__instance == 0){
-    __instance = new ofxThreadedImageLoader();
+    __instance = new ofxThreadedImageLoaderSingleton();
   }
   return __instance;
 }
 
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::setup(){
+void ofxThreadedImageLoaderSingleton::setup(){
   instance();
 }
 
 //--------------------------------------------------------------
-ofxThreadedImageLoader::ofxThreadedImageLoader() 
+ofxThreadedImageLoaderSingleton::ofxThreadedImageLoaderSingleton() 
 :ofThread()
 {
 	nextID = 0;
-    ofAddListener(ofEvents().update, this, &ofxThreadedImageLoader::update);
-	ofAddListener(ofURLResponseEvent(),this,&ofxThreadedImageLoader::urlResponse);
+    ofAddListener(ofEvents().update, this, &ofxThreadedImageLoaderSingleton::update);
+	ofAddListener(ofURLResponseEvent(),this,&ofxThreadedImageLoaderSingleton::urlResponse);
     
     startThread();
     lastUpdate = 0;
 }
 
-ofxThreadedImageLoader::~ofxThreadedImageLoader(){
+ofxThreadedImageLoaderSingleton::~ofxThreadedImageLoaderSingleton(){
 	condition.signal();
-    ofRemoveListener(ofEvents().update, this, &ofxThreadedImageLoader::update);
-	ofRemoveListener(ofURLResponseEvent(),this,&ofxThreadedImageLoader::urlResponse);
+    ofRemoveListener(ofEvents().update, this, &ofxThreadedImageLoaderSingleton::update);
+	ofRemoveListener(ofURLResponseEvent(),this,&ofxThreadedImageLoaderSingleton::urlResponse);
 }
 
 // Load an image from disk.
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::loadFromDisk(ofImage& image, string filename) {
+void ofxThreadedImageLoaderSingleton::loadFromDisk(ofImage& image, string filename) {
   instance();
 	__instance->nextID++;
 	ofImageLoaderEntry entry(image, OF_LOAD_FROM_DISK);
@@ -55,7 +55,7 @@ void ofxThreadedImageLoader::loadFromDisk(ofImage& image, string filename) {
 
 // Load an url asynchronously from an url.
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::loadFromURL(ofImage& image, string url) {
+void ofxThreadedImageLoaderSingleton::loadFromURL(ofImage& image, string url) {
   instance();
 	__instance->nextID++;
 	ofImageLoaderEntry entry(image, OF_LOAD_FROM_URL);
@@ -73,7 +73,7 @@ void ofxThreadedImageLoader::loadFromURL(ofImage& image, string url) {
 
 // Reads from the queue and loads new images.
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::threadedFunction() {
+void ofxThreadedImageLoaderSingleton::threadedFunction() {
     deque<ofImageLoaderEntry> images_to_load;
 
 	while( isThreadRunning() ) {
@@ -92,7 +92,7 @@ void ofxThreadedImageLoader::threadedFunction() {
             
             if(entry.type == OF_LOAD_FROM_DISK) {
                 if(! entry.image->loadImage(entry.filename) )  { 
-                    ofLogError() << "ofxThreadedImageLoader error loading image " << entry.filename;
+                    ofLogError() << "ofxThreadedImageLoaderSingleton error loading image " << entry.filename;
                 }
                 
                 lock();
@@ -116,7 +116,7 @@ void ofxThreadedImageLoader::threadedFunction() {
 // The loaded image is removed from the async_queue and added to the
 // update queue. The update queue is used to update the texture.
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::urlResponse(ofHttpResponse & response) {
+void ofxThreadedImageLoaderSingleton::urlResponse(ofHttpResponse & response) {
 	if(response.status == 200) {
 		lock();
 		
@@ -146,7 +146,7 @@ void ofxThreadedImageLoader::urlResponse(ofHttpResponse & response) {
 
 // Check the update queue and update the texture
 //--------------------------------------------------------------
-void ofxThreadedImageLoader::update(ofEventArgs & a){
+void ofxThreadedImageLoaderSingleton::update(ofEventArgs & a){
     
     // Load 1 image per update so we don't block the gl thread for too long
     
@@ -176,7 +176,7 @@ void ofxThreadedImageLoader::update(ofEventArgs & a){
 // Find an entry in the aysnc queue.
 //   * private, no lock protection, is private function
 //--------------------------------------------------------------
-ofxThreadedImageLoader::entry_iterator ofxThreadedImageLoader::getEntryFromAsyncQueue(string name) {
+ofxThreadedImageLoaderSingleton::entry_iterator ofxThreadedImageLoaderSingleton::getEntryFromAsyncQueue(string name) {
 	entry_iterator it = images_async_loading.begin();
 	for(;it != images_async_loading.end();it++) {
 		if((*it).name == name) {

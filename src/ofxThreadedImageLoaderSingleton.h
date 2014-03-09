@@ -11,21 +11,21 @@
 
 using namespace std;
 
-class ofxThreadedImageLoader : public ofThread {
+class ofxThreadedImageLoaderSingleton : public ofThread {
   public:
-    ~ofxThreadedImageLoader();
+    ~ofxThreadedImageLoaderSingleton();
 
     static void setup();
     static void loadFromDisk(ofImage& image, string file);
     static void loadFromURL(ofImage& image, string url);
 
     ofEvent<ofImage> imageLoadedEvent;
-    static ofxThreadedImageLoader* instance();
+    static ofxThreadedImageLoaderSingleton* instance();
 
 
   private:
-    static ofxThreadedImageLoader* __instance;
-    ofxThreadedImageLoader();
+    static ofxThreadedImageLoaderSingleton* __instance;
+    ofxThreadedImageLoaderSingleton();
     void update(ofEventArgs & a);
     virtual void threadedFunction();
     void urlResponse(ofHttpResponse & response);
